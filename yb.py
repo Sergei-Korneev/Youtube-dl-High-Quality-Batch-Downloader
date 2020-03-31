@@ -1,4 +1,5 @@
-import os,sys,unicodedata,subprocess
+# -*- coding: cp1251 -*-
+import os,sys,unicodedata,subprocess, contextlib
  	
 downoadir='./Video_Downloads'
 try:
@@ -6,30 +7,58 @@ try:
 except:
   print("Folder create failed") 
   
-logf = open("encoding.log","a")
-#High Quality
-hq = 'hq.txt'
-with open(hq) as fp:
+logf = open("log.log","a")
+
+
+
+         
+#Low quality
+lq = "lq.txt"
+try:
+ with open(lq) as fp:
    line = fp.readline()
    cnt = 1
    while line:
        os.chdir(downoadir)
-       print("Line {}: {}".format(cnt, line.strip()))
-       cmd = "youtube-dl  --write-auto-sub -f 137 "+ line
-       popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+       print("Downloading LQ {}: {}".format(cnt, line.strip()))
+       cmd = "youtube-dl  --write-auto-sub -f 18 "+ line
+       popen = subprocess.Popen(cmd, shell=True)
        popen.wait()
        rc = popen.returncode
-       output = popen.stdout.read()
-       if rc==0:
-       #print
-        logf.write('\nDownloading success: \"'+line+'\"\n' )
-       else:
+       
+       if rc!=0:
+        logf.write('\nDownloading fail: \"'+line+'\"\n' )
+       cnt += 1
+       os.chdir('..')
+       line = fp.readline()
+except:
+  print("LQ failed") 
+
+
+
+
+
+#High Quality
+hq = "hq.txt"
+try:
+ with open(hq) as fp:
+   line = fp.readline()
+   cnt = 1
+   while line:
+       os.chdir(downoadir)
+       print("Downloading HQ {}: {}".format(cnt, line.strip()))
+       cmd = "youtube-dl  --write-auto-sub -f 137 "+ line
+       popen = subprocess.Popen(cmd, shell=True)
+       popen.wait()
+       rc = popen.returncode
+       
+       if rc!=0:
         logf.write('\nDownloading fail: \"'+line+'\"\n' )
        cmd = "youtube-dl  --write-auto-sub -f 251 "+ line
-       popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+       popen = subprocess.Popen(cmd, shell=True)
        popen.wait()
        rc = popen.returncode
-       output = popen.stdout.read()
+       print rc
        if rc!=0:
        #print
         logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
@@ -37,56 +66,57 @@ with open(hq) as fp:
        os.chdir('..')
        line = fp.readline()
 
-       
-#Low quality       
-lq = 'lq.txt'
-with open(lq) as fp:
-   line = fp.readline()
-   cnt = 1
-   while line:
-       os.chdir(downoadir)
-       print("Line {}: {}".format(cnt, line.strip()))
-       cmd = "youtube-dl  --write-auto-sub -f 18 "+ line
-       popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-       popen.wait()
-       rc = popen.returncode
-       output = popen.stdout.read()
-       if rc==0:
-        logf.write('\nDownloading success: \"'+line+'\"\n' )
-       else:
-        logf.write('\nDownloading fail: \"'+line+'\"\n' )
-       cnt += 1
-       os.chdir('..')
-       line = fp.readline()
+except:
+  print("HQ failed") 
 
-
+#try:
 #Merge sound and video       
 os.chdir(downoadir)
+symbols = (u"‡·‚„‰Â∏ÊÁËÈÍÎÏÌÓÔÒÚÛÙıˆ˜¯˘˙˚¸˝˛ˇ¿¡¬√ƒ≈®∆«»… ÀÃÕŒœ–—“”‘’÷◊ÿŸ⁄€‹›ﬁﬂ",
+           u"abvgdeejzijklmnoprstufhzcss_y_euaABVGDEEJZIJKLMNOPRSTUFHZCSS_Y_EUA")
+tr = {ord(a):ord(b) for a, b in zip(*symbols)}
 files_path = u'.'
 files = [unicodedata.normalize('NFC', f) for f in os.listdir(u'.')]
 for filename in files:
     if filename.endswith(".mp4"):
-     fileenc=filename.encode('utf-8')
+     filename1=filename.translate(tr)
+     fileenc=filename1.encode('utf-8')
      asciidata=fileenc.decode("utf-8").encode("ascii","ignore")
      os.rename (filename,asciidata)
      filenameb=os.path.splitext(asciidata)[0]
-     os.rename (os.path.splitext(filename)[0]+".webm",filenameb+".webm")
-     cmd = "ffmpeg -i \""+ filenameb +".mp4\" -i \""+filenameb+".webm" + "\" -c copy \""  + filenameb + ".mkv\""
-     
+     aux=""
+     if os.path.exists((os.path.splitext(filename)[0]+".webm")):
+      os.rename (os.path.splitext(filename)[0]+".webm",filenameb+".webm")
+      aux=" -i \""+filenameb+".webm\" "
+     sub=""
+     if os.path.exists((os.path.splitext(filename)[0]+".en.vtt")):
+       
+       os.rename (os.path.splitext(filename)[0]+".en.vtt",filenameb+".vtt")
+       sub="  -i \""+filenameb+".vtt\" "
+     cmd = "ffmpeg -i \""+ filenameb +".mp4\" "+sub +aux + " -c copy  \""  + filenameb + ".mkv\" "
+     print cmd
+     logf.write(cmd+'\n' )
      popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
      popen.wait()
      #streamdata = popen.communicate()[0]
      rc = popen.returncode
      output = popen.stdout.read()
-       
+     print rc
      if rc==0:
        #print
        logf.write('\nEncoding success: \"'+filenameb+'\"\n' )
-       os.remove(filenameb+".webm")
-       os.remove(filenameb+".mp4") 
+       if os.path.exists(filenameb+".webm"): os.remove(filenameb+".webm")
+       if os.path.exists(filenameb+".mp4"): os.remove(filenameb+".mp4")
+       if os.path.exists(filenameb+".vtt"): os.remove(filenameb+".vtt")
+       
      else:
        logf.write('\nEncoding fail: \"'+filenameb+'\"\n' )
      
-os.chdir('..')
 
+
+#except:
+ # print("Encoding failed") 
+os.chdir('..')
+open(hq, 'w').close()
+open(lq, 'w').close()
 logf.close()
