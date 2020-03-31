@@ -82,6 +82,7 @@ for filename in files:
      filename1=filename.translate(tr)
      fileenc=filename1.encode('utf-8')
      asciidata=fileenc.decode("utf-8").encode("ascii","ignore")
+     #print filename+" ren to  "+asciidata
      os.rename (filename,asciidata)
      filenameb=os.path.splitext(asciidata)[0]
      aux=""
