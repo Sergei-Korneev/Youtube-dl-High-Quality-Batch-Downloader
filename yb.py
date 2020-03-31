@@ -94,14 +94,13 @@ for filename in files:
        os.rename (os.path.splitext(filename)[0]+".en.vtt",filenameb+".vtt")
        sub="  -i \""+filenameb+".vtt\" "
      cmd = "ffmpeg -i \""+ filenameb +".mp4\" "+sub +aux + " -c copy  \""  + filenameb + ".mkv\" "
-     print cmd
-     logf.write(cmd+'\n' )
+     
      popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
      popen.wait()
      #streamdata = popen.communicate()[0]
      rc = popen.returncode
      output = popen.stdout.read()
-     print rc
+     
      if rc==0:
        #print
        logf.write('\nEncoding success: \"'+filenameb+'\"\n' )
