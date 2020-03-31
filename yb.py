@@ -20,13 +20,19 @@ with open(hq) as fp:
        popen.wait()
        rc = popen.returncode
        output = popen.stdout.read()
-       print rc
+       if rc==0:
+       #print
+        logf.write('\nDownloading success: \"'+line+'\"\n' )
+       else:
+        logf.write('\nDownloading fail: \"'+line+'\"\n' )
        cmd = "youtube-dl  --write-auto-sub -f 251 "+ line
        popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
        popen.wait()
        rc = popen.returncode
        output = popen.stdout.read()
-       print rc
+       if rc!=0:
+       #print
+        logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
        cnt += 1
        os.chdir('..')
        line = fp.readline()
@@ -46,12 +52,9 @@ with open(lq) as fp:
        rc = popen.returncode
        output = popen.stdout.read()
        if rc==0:
-       #print
-       logf.write('\nDownloading success: \"'+line+'\"\n' )
-       os.remove(filenameb+".webm")
-       os.remove(filenameb+".mp4") 
+        logf.write('\nDownloading success: \"'+line+'\"\n' )
        else:
-       logf.write('\nDownloading fail: \"'+line+'\"\n' )
+        logf.write('\nDownloading fail: \"'+line+'\"\n' )
        cnt += 1
        os.chdir('..')
        line = fp.readline()
