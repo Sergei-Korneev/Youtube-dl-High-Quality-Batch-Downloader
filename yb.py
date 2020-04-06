@@ -1,7 +1,7 @@
 # -*- coding: cp1251 -*-
 import os,sys,unicodedata,subprocess, contextlib
  	
-downoadir='./Video_Downloads'
+downoadir=os.getcwd()+'\Video_Downloads'
 try:
   os.mkdir(downoadir)
 except:
@@ -11,7 +11,7 @@ logf = open("log.log","a")
 
 
 
-         
+       
 #Low quality
 lq = "lq.txt"
 try:
@@ -21,7 +21,8 @@ try:
    while line:
        os.chdir(downoadir)
        print("Downloading LQ {}: {}".format(cnt, line.strip()))
-       cmd = "youtube-dl  --write-auto-sub -f 18 "+ line
+       checkformat = subprocess.check_output("youtube-dl -F " + line).splitlines()
+       cmd = "youtube-dl  --write-auto-sub -f " + checkformat[-1][0:3] + " " + line
        popen = subprocess.Popen(cmd, shell=True)
        popen.wait()
        rc = popen.returncode
@@ -37,7 +38,6 @@ except:
 
 
 
-
 #High Quality
 hq = "hq.txt"
 try:
@@ -45,9 +45,21 @@ try:
    line = fp.readline()
    cnt = 1
    while line:
+       
        os.chdir(downoadir)
        print("Downloading HQ {}: {}".format(cnt, line.strip()))
-       cmd = "youtube-dl  --write-auto-sub -f 137 "+ line
+       checkformat = subprocess.check_output("youtube-dl -F " + line).splitlines()
+       
+       i = -1
+       while (i >-9):
+           
+           if ("mp4" in checkformat[i] and "video only" in checkformat[i]):
+             cmd = "youtube-dl  --write-auto-sub -f " + checkformat[i][0:3] + " " + line
+             print "\n\nSelected video format is: \n\n"+checkformat[i]+"\n\n"
+             break
+           i -= 1
+        
+        
        popen = subprocess.Popen(cmd, shell=True)
        popen.wait()
        rc = popen.returncode
@@ -58,7 +70,7 @@ try:
        popen = subprocess.Popen(cmd, shell=True)
        popen.wait()
        rc = popen.returncode
-       print rc
+       
        if rc!=0:
        #print
         logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
