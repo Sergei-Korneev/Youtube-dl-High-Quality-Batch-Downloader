@@ -1,5 +1,5 @@
 # -*- coding: cp1251 -*-
-import os,sys,unicodedata,subprocess, contextlib , datetime
+import os,sys,unicodedata,subprocess, contextlib , datetime, platform
 
 
 if (sys.version_info.major != 3 and sys.version_info.minor != 8):
@@ -8,20 +8,62 @@ if (sys.version_info.major != 3 and sys.version_info.minor != 8):
     sys.exit(1)
 
 
+cudir=(os.path.abspath(os.getcwd()))
+cur_system=platform.system()
 now = datetime.datetime.now()
 dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+trycount=9
+downoadir=os.getcwd()+'/Video_Downloads'
+downoadir2=os.getcwd()+'/Files_Downloads'
 
 
-
-downoadir=os.getcwd()+'\Video_Downloads'
-try:
-  os.mkdir(downoadir)
-except:
-  print("Folder create failed") 
+if (cur_system=='Windows'):
+  wgetbin=os.getcwd()+ '/bin/wget/wget.exe'
+  ytdlbin=os.getcwd()+ '/bin/youtube-dl.exe'
+  ffmpegbin=os.getcwd()+ '/bin/ffmpeg/ffmpeg.exe'
+elif (cur_system=='Linux'):
+      wgetbin='wget'
+      ytdlbin='youtube-dl'
+      ffmpegbin='ffmpeg'
   
-logf = open("log.log","a")
 
+  
+
+if not os.path.exists(downoadir): os.mkdir(downoadir)
+if not os.path.exists(downoadir2): os.mkdir(downoadir2)
+    
+logf = open("log.log","a")
 logf.write('\n----------------------  Started at:  '+dt_string +'  ----------------------\n\n' )
+       
+#Files
+fl = "files.txt"
+#try:
+
+with open(fl) as fp:
+   line = fp.readline()
+   cnt = 1
+   while line:
+       if (line == "\n"):break
+       os.chdir(downoadir2)
+       print("\n------------------\n\nDownloading file {}: {}".format(cnt, line.strip())+"\n\n")
+       cmd = [wgetbin,"--continue",  "--tries=15", "--show-progress", "--progress=bar:force",    line.strip() ]
+       tr=0 
+       while tr<trycount: 
+        popen = subprocess.Popen(cmd, shell=False)
+        popen.wait()
+        rc = popen.returncode
+        tr+=1
+        if rc==0:break   
+
+       if rc!=0:
+       #print
+        logf.write('\nDownloading failed for: \"'+line+'\"\n' )
+       cnt += 1
+       os.chdir(cudir)
+       line = fp.readline()
+#except:
+  #print("Files failed") 
+
 
        
 #Low quality
@@ -34,8 +76,8 @@ with open(lq) as fp:
    while line:
        if (line == "\n"):break
        os.chdir(downoadir)
-       print("\n\nDownloading LQ {}: {}".format(cnt, line.strip())+"\n\n")
-       checkformat = subprocess.check_output("youtube-dl -F " + line).splitlines()
+       print("\n------------------\n\nDownloading LQ {}: {}".format(cnt, line.strip())+"\n\n")
+       checkformat = subprocess.check_output([ytdlbin,"-F",line]).splitlines()
        i = -1
        
        while (checkformat):
@@ -44,30 +86,39 @@ with open(lq) as fp:
              #print (checkformat[i]+"\n")
            
            
-             cmd = "youtube-dl --restrict-filenames --geo-bypass -R 30 --write-auto-sub -f " + checkformat[i][0:3].decode() + " " + line
+             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f" , checkformat[i][0:3].decode() , line]
              print ("\n\nSelected video format is: \n\n"+checkformat[i].decode()+"\n\n")
              break
             
            i -= 1
         
-       
-       popen = subprocess.Popen(cmd, shell=True)
-       popen.wait()
-       rc = popen.returncode
+       tr=0 
+       while tr<trycount: 
+        popen = subprocess.Popen(cmd, shell=False)
+        popen.wait()
+        rc = popen.returncode
+        tr+=1
+        if rc==0:break   
+
        
        if rc!=0:
         logf.write('\nDownloading fail: \"'+line+'\"\n' )
-       print ("\n\nDownloading soundtrack...\n\n")
-       cmd = "youtube-dl --restrict-filenames --geo-bypass -R 30 --write-auto-sub -f 251 "+ line
-       popen = subprocess.Popen(cmd, shell=True)
-       popen.wait()
-       rc = popen.returncode
+       else:  
+        print ("\n\nDownloading soundtrack...\n\n")
+        cmd = [ytdlbin,"--restrict-filenames", "--geo-bypass", "-R", "30", "--write-auto-sub", "-f", "251", line]
+        tr=0 
+        while tr<trycount: 
+         popen = subprocess.Popen(cmd, shell=False)
+         popen.wait()
+         rc = popen.returncode
+         tr+=1
+         if rc==0:break  
        
-       if rc!=0:
-       #print
-        logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
+        if rc!=0:
+        #print
+         logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
        cnt += 1
-       os.chdir('..')
+       os.chdir(cudir)
        line = fp.readline()
 #except:
   #print("LQ failed") 
@@ -84,37 +135,44 @@ with open(hq) as fp:
    while line:
        if (line=="\n"):break
        os.chdir(downoadir)
-       print("Downloading HQ {}: {}".format(cnt, line.strip())+"\n\n")
+       print("\n------------------\nDownloading HQ {}: {}".format(cnt, line.strip())+"\n\n")
        
-       checkformat = subprocess.check_output("youtube-dl -F " + str(line)).splitlines()
+       checkformat = subprocess.check_output ( [ytdlbin,"-F",str(line)]).splitlines()
        
        i = -1
        while (checkformat):
            
            if ('mp4' in checkformat[i].decode() and 'video only' in checkformat[i].decode()):
-             cmd = "youtube-dl --restrict-filenames --geo-bypass -R 30 --write-auto-sub -f " + checkformat[i][0:3].decode() + " " + line
+             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f", checkformat[i][0:3].decode(), line]
              print ("\n\nSelected video format is: \n\n"+checkformat[i].decode()+"\n\n")
              break
            i -= 1
-        
-        
-       popen = subprocess.Popen(cmd, shell=True)
-       popen.wait()
-       rc = popen.returncode
+       tr=0 
+       while tr<trycount: 
+        popen = subprocess.Popen(cmd, shell=False)
+        popen.wait()
+        rc = popen.returncode
+        tr+=1
+        if rc==0:break
        
        if rc!=0:
         logf.write('\nDownloading fail: \"'+line+'\"\n' )
-       print ("\n\nDownloading soundtrack...\n\n") 
-       cmd = "youtube-dl --restrict-filenames --geo-bypass -R 30 --write-auto-sub -f 251 "+ line
-       popen = subprocess.Popen(cmd, shell=True)
-       popen.wait()
-       rc = popen.returncode
+       else:
+        print ("\n\nDownloading soundtrack...\n\n") 
+        cmd = [ytdlbin,"--restrict-filenames","--geo-bypass","-R","30","--write-auto-sub","-f","251", line]
+        tr=0 
+        while tr<trycount: 
+         popen = subprocess.Popen(cmd, shell=False)
+         popen.wait()
+         rc = popen.returncode
+         tr+=1
+         if rc==0:break
        
-       if rc!=0:
+        if rc!=0:
        #print
-        logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
+         logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
        cnt += 1
-       os.chdir('..')
+       os.chdir(cudir)
        line = fp.readline()
 
 #except:
@@ -125,7 +183,8 @@ with open(hq) as fp:
 
 print("\n\nEncoding... \n\n")  
 os.chdir(downoadir)
-symbols = (u"абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
+
+symbols = (u"Г ГЎГўГЈГ¤ГҐЕѕГ¦Г§ГЁГ©ГЄГ«Г¬Г­Г®ГЇГ°Г±ГІГіГґГµГ¶Г·ГёГ№ГєГ»ГјГЅГѕГїГЂГЃГ‚ГѓГ„Г…ЕЎГ†Г‡Г€Г‰ГЉГ‹ГЊГЌГЋГЏГђГ‘Г’Г“Г”Г•Г–Г—ГГ™ГљГ›ГњГќГћГџ",
            u"abvgdeejzijklmnoprstufhzcss_y_euaABVGDEEJZIJKLMNOPRSTUFHZCSS_Y_EUA")
 tr = {ord(a):ord(b) for a, b in zip(*symbols)}
 files_path = u'.'
@@ -138,20 +197,25 @@ for filename in files:
   
      os.rename (filename,asciidata)
      filenameb=os.path.splitext(asciidata)[0].decode()
-     aux=""
+     
+     cmd = [ffmpegbin,"-y", "-i",filenameb+".mp4","-c","copy",filenameb+".mkv"]
+     
      if os.path.exists((os.path.splitext(filename)[0]+".webm")):
-      if not os.path.exists(filenameb+".webm"):os.rename (os.path.splitext(filename)[0]+".webm",filenameb+".webm")
-      aux=" -i \""+filenameb+".webm\" "
-     sub=""
+      if not os.path.exists(filenameb+".webm"):os.rename(os.path.splitext(filename)[0]+".webm",filenameb+".webm")
+      cmd.insert(4,"-i")
+      cmd.insert(5,filenameb+".webm")
+     
      if os.path.exists((os.path.splitext(filename)[0]+".en.vtt")):
-       
-       if not os.path.exists(filenameb+".en.vtt"):os.rename (os.path.splitext(filename)[0]+".en.vtt",filenameb+".en.vtt")
-       sub="  -i \""+filenameb+".en.vtt\" "
-       cmd = "ffmpeg  "+sub  + "\""+filenameb + ".srt\" "
-       popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+       if not os.path.exists(filenameb+".en.vtt"):os.rename(os.path.splitext(filename)[0]+".en.vtt",filenameb+".en.vtt")
+       popen = subprocess.Popen([ffmpegbin,"-i",filenameb+".en.vtt",filenameb+".srt"], stdout=subprocess.PIPE)
        popen.wait()
-       sub="  -i \""+filenameb+".srt\" "
-     cmd = "ffmpeg -y -i \""+ filenameb +".mp4\" "+sub +aux + " -c copy  \""  + filenameb + ".mkv\" "
+       cmd.insert(6,"-i")
+       cmd.insert(7,filenameb+".srt")
+       
+       
+     print (os.path.abspath(os.getcwd()))  
+     
+     print(cmd)
      popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
      popen.wait()
      #streamdata = popen.communicate()[0]
@@ -173,14 +237,15 @@ for filename in files:
 
 #except:
  # print("Encoding failed") 
-os.chdir('..')
+os.chdir(cudir)
 open(hq, 'w').close()
 open(lq, 'w').close()
-
+open(fl, 'w').close()
 now = datetime.datetime.now()
 dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 logf.write('\n----------------------  Finished at:  '+dt_string +'  ----------------------\n\n' )
-
-
-
 logf.close()
+
+
+
+
