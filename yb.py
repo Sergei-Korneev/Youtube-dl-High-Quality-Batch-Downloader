@@ -18,17 +18,17 @@ cur_system=platform.system()
 now = datetime.datetime.now()
 dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 trycount=9
-downoadir=os.getcwd()+'/Video_Downloads'
-downoadir2=os.getcwd()+'/Files_Downloads'
-downoadir3=os.getcwd()+'/Torrents'
+downoadir=cudir+'/Video_Downloads'
+downoadir2=cudir+'/Files_Downloads'
+downoadir3=cudir+'/Torrents'
 
 
 
 if (cur_system=='Windows'):
-  wgetbin=os.getcwd()+ '/bin/wget/wget.exe'
-  ytdlbin=os.getcwd()+ '/bin/youtube-dl.exe'
-  ffmpegbin=os.getcwd()+ '/bin/ffmpeg/ffmpeg.exe'
-  aria2c=os.getcwd()+ '/bin/aria2/aria2c.exe'
+  wgetbin=cudir+ '/bin/wget/wget.exe'
+  ytdlbin=cudir+ '/bin/youtube-dl.exe'
+  ffmpegbin=cudir+ '/bin/ffmpeg/ffmpeg.exe'
+  aria2c=cudir+ '/bin/aria2/aria2c.exe'
 elif (cur_system=='Linux'):
       wgetbin='wget'
       ytdlbin='youtube-dl'
@@ -55,7 +55,7 @@ def torrents_():
 
  torf.close()
 
- cmd = [aria2c,"-i",  os.getcwd()+"/"+fl , "-d", downoadir3]
+ cmd = [aria2c,"-i",  cudir+"/"+fl , "-d", downoadir3]
  tr=0 
  popen = subprocess.Popen(cmd, shell=False)
  popen.wait()
@@ -248,8 +248,6 @@ def videos_():
        cmd.insert(7,filenameb+".srt")
        
        
-     print (os.path.abspath(os.getcwd()))  
-     
      print(cmd)
      popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
      popen.wait()
@@ -260,7 +258,7 @@ def videos_():
      if rc==0:
  
        logf.write('\nEncoding success: \"'+filenameb+'\"\n' )
-       for ext in [".webm",".mp4",".en.vtt",".srt"]
+       for ext in [".webm",".mp4",".en.vtt",".srt"]:
           if os.path.exists(filenameb+ext): os.remove(filenameb+ext)
     
      else:
