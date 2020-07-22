@@ -20,6 +20,8 @@ dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 trycount=9
 downoadir=os.getcwd()+'/Video_Downloads'
 downoadir2=os.getcwd()+'/Files_Downloads'
+downoadir3=os.getcwd()+'/Torrents'
+
 
 
 if (cur_system=='Windows'):
@@ -34,10 +36,10 @@ elif (cur_system=='Linux'):
       aria2c='aria2c'
   
 
-  
+for dc in [downoadir,downoadir2,downoadir3]: 
+  if not os.path.exists(dc): os.mkdir(dc)
 
-if not os.path.exists(downoadir): os.mkdir(downoadir)
-if not os.path.exists(downoadir2): os.mkdir(downoadir2)
+
     
 logf = open("log.log","a")
 logf.write('\n----------------------  Started at:  '+dt_string +'  ----------------------\n\n' )
@@ -45,14 +47,15 @@ logf.write('\n----------------------  Started at:  '+dt_string +'  -------------
 
 
 def torrents_(): 
- torf = open("torrents.txt","w")
- for file in os.listdir(os.getcwd()+"/torrents"):
+ fl="torrents.txt"
+ torf = open(fl,"w")
+ for file in os.listdir(downoadir3):
    if file.endswith(".torrent"):
-     torf.write(os.getcwd()+"/torrents/"+ file+"\n")
+     torf.write(downoadir3+"/"+ file+"\n")
 
  torf.close()
 
- cmd = [aria2c,"-i",  os.getcwd()+"/torrents.txt" , "-d", os.getcwd()+"/torrents"]
+ cmd = [aria2c,"-i",  os.getcwd()+"/"+fl , "-d", downoadir3]
  tr=0 
  popen = subprocess.Popen(cmd, shell=False)
  popen.wait()
@@ -257,11 +260,9 @@ def videos_():
      if rc==0:
  
        logf.write('\nEncoding success: \"'+filenameb+'\"\n' )
-       if os.path.exists(filenameb+".webm"): os.remove(filenameb+".webm")
-       if os.path.exists(filenameb+".mp4"): os.remove(filenameb+".mp4")
-       if os.path.exists(filenameb+".en.vtt"): os.remove(filenameb+".en.vtt")
-       if os.path.exists(filenameb+".srt"): os.remove(filenameb+".srt")
-       
+       for ext in [".webm",".mp4",".en.vtt",".srt"]
+          if os.path.exists(filenameb+ext): os.remove(filenameb+ext)
+    
      else:
        logf.write('\nEncoding fail: \"'+filenameb+'\"\n' )
  os.chdir(cudir)
@@ -285,6 +286,7 @@ elif (str(sys.argv[1])  == "torrents"):
 elif (str(sys.argv[1])  == "all"):
      files_()
      videos_()
+     
 else:
      help_()
      sys.exit(1)
