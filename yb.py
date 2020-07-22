@@ -7,6 +7,11 @@ if (sys.version_info.major != 3 and sys.version_info.minor != 8):
     print("You are using Python {}.{}.".format(sys.version_info.major, sys.version_info.minor))
     sys.exit(1)
 
+ 
+def help_():
+  print("use: \nyb.py files \nyb.py video \nyb.py all\nyb.py torrents")
+  
+
 
 cudir=(os.path.abspath(os.getcwd()))
 cur_system=platform.system()
@@ -21,10 +26,12 @@ if (cur_system=='Windows'):
   wgetbin=os.getcwd()+ '/bin/wget/wget.exe'
   ytdlbin=os.getcwd()+ '/bin/youtube-dl.exe'
   ffmpegbin=os.getcwd()+ '/bin/ffmpeg/ffmpeg.exe'
+  aria2c=os.getcwd()+ '/bin/aria2/aria2c.exe'
 elif (cur_system=='Linux'):
       wgetbin='wget'
       ytdlbin='youtube-dl'
       ffmpegbin='ffmpeg'
+      aria2c='aria2c'
   
 
   
@@ -34,12 +41,35 @@ if not os.path.exists(downoadir2): os.mkdir(downoadir2)
     
 logf = open("log.log","a")
 logf.write('\n----------------------  Started at:  '+dt_string +'  ----------------------\n\n' )
-       
+ 
+
+
+def torrents_(): 
+ torf = open("torrents.txt","w")
+ for file in os.listdir(os.getcwd()+"/torrents"):
+   if file.endswith(".torrent"):
+     torf.write(os.getcwd()+"/torrents/"+ file+"\n")
+
+ torf.close()
+
+ cmd = [aria2c,"-i",  os.getcwd()+"/torrents.txt" , "-d", os.getcwd()+"/torrents"]
+ tr=0 
+ popen = subprocess.Popen(cmd, shell=False)
+ popen.wait()
+ rc = popen.returncode
+ print (rc)
+ 
+ 
+ 
+
+def files_(): 
+
+ print("\n\nDownloading files... \n\n")       
 #Files
-fl = "files.txt"
+ fl = "files.txt"
 #try:
 
-with open(fl) as fp:
+ with open(fl) as fp:
    line = fp.readline()
    cnt = 1
    while line:
@@ -63,14 +93,16 @@ with open(fl) as fp:
        line = fp.readline()
 #except:
   #print("Files failed") 
+ open(fl, 'w').close()
 
+def videos_():   
 
-       
+ print("\n\nDownloading videos... \n\n")       
 #Low quality
-lq = "lq.txt"
+ lq = "lq.txt"
 #try:
 
-with open(lq) as fp:
+ with open(lq) as fp:
    line = fp.readline()
    cnt = 1
    while line:
@@ -127,9 +159,9 @@ with open(lq) as fp:
 
 
 #High Quality
-hq = "hq.txt"
+ hq = "hq.txt"
 #try:
-with open(hq) as fp:
+ with open(hq) as fp:
    line = fp.readline()
    cnt = 1
    while line:
@@ -181,15 +213,15 @@ with open(hq) as fp:
 #try:
 #Merge sound and video
 
-print("\n\nEncoding... \n\n")  
-os.chdir(downoadir)
+ print("\n\nEncoding... \n\n")  
+ os.chdir(downoadir)
 
-symbols = (u"àáâãäåžæçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅšÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß",
+ symbols = (u"àáâãäåžæçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅšÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß",
            u"abvgdeejzijklmnoprstufhzcss_y_euaABVGDEEJZIJKLMNOPRSTUFHZCSS_Y_EUA")
-tr = {ord(a):ord(b) for a, b in zip(*symbols)}
-files_path = u'.'
-files = [unicodedata.normalize('NFC', f) for f in os.listdir(u'.')]
-for filename in files:
+ tr = {ord(a):ord(b) for a, b in zip(*symbols)}
+ files_path = u'.'
+ files = [unicodedata.normalize('NFC', f) for f in os.listdir(u'.')]
+ for filename in files:
     if filename.endswith(".mp4"):
      filename1=filename.translate(tr)
      fileenc=filename1.encode('utf-8')
@@ -232,15 +264,32 @@ for filename in files:
        
      else:
        logf.write('\nEncoding fail: \"'+filenameb+'\"\n' )
-     
+ os.chdir(cudir)
+ open(hq, 'w').close()
+ open(lq, 'w').close()
 
 
 #except:
  # print("Encoding failed") 
-os.chdir(cudir)
-open(hq, 'w').close()
-open(lq, 'w').close()
-open(fl, 'w').close()
+ 
+ 
+if (len(sys.argv)==1):
+     help_()
+     sys.exit(1)
+elif (str(sys.argv[1])  == "video"):
+     videos_()
+elif (str(sys.argv[1])  == "files"):
+     files_()
+elif (str(sys.argv[1])  == "torrents"):
+     torrents_()
+elif (str(sys.argv[1])  == "all"):
+     files_()
+     videos_()
+else:
+     help_()
+     sys.exit(1)
+   
+ 
 now = datetime.datetime.now()
 dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 logf.write('\n----------------------  Finished at:  '+dt_string +'  ----------------------\n\n' )
