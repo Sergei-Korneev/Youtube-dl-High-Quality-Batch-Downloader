@@ -9,7 +9,7 @@ if (sys.version_info.major != 3 and sys.version_info.minor != 8):
 
  
 def help_():
-  print("use: \nyb.py files \nyb.py video \nyb.py all\nyb.py torrents")
+  print("use: \nyb.py files \nyb.py videos \nyb.py all\nyb.py torrents")
   
 
 
