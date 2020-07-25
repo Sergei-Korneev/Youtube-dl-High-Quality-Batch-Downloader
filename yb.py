@@ -169,6 +169,9 @@ def encode():
 
 
 
+#try:
+#Merge sound and video
+
 def videos_():   
 
  print("\n\nDownloading videos... \n\n")       
@@ -291,9 +294,6 @@ def videos_():
    
 #except:
 #  print("HQ failed") 
-
-#try:
-#Merge sound and video
 
  open(hq, 'w').close()
  open(lq, 'w').close()
