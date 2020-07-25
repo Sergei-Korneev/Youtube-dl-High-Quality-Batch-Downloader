@@ -1,6 +1,6 @@
 # -*- coding: cp1251 -*-
 import os,sys,unicodedata,subprocess, contextlib , datetime, platform
-
+from pathlib import Path
 
 if (sys.version_info.major != 3 and sys.version_info.minor != 8):
     print("This script is tested on Python 3.8!")
@@ -18,29 +18,33 @@ cur_system=platform.system()
 now = datetime.datetime.now()
 dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 trycount=9
-downoadir=cudir+'/Video_Downloads'
-downoadir2=cudir+'/Files_Downloads'
-downoadir3=cudir+'/Torrents'
-
 
 
 if (cur_system=='Windows'):
-  wgetbin=cudir+ '/bin/wget/wget.exe'
-  ytdlbin=cudir+ '/bin/youtube-dl.exe'
-  ffmpegbin=cudir+ '/bin/ffmpeg/ffmpeg.exe'
-  aria2c=cudir+ '/bin/aria2/aria2c.exe'
+  wgetbin=cudir+ '\\bin\\wget\\wget.exe'
+  ytdlbin=cudir+ '\\bin\\youtube-dl.exe'
+  ffmpegbin=cudir+ '\\bin\\ffmpeg\\ffmpeg.exe'
+  aria2c=cudir+ '\\bin\\aria2\\aria2c.exe'
+  pthsl='\\'
 elif (cur_system=='Linux'):
       wgetbin='wget'
       ytdlbin='youtube-dl'
       ffmpegbin='ffmpeg'
       aria2c='aria2c'
+      pthsl='//'
+
+downoadir=cudir+pthsl+'Downloads'+pthsl+'Videos'
+downoadir2=cudir+pthsl+'Downloads'+pthsl+'Files'
+downoadir3=cudir+pthsl+'Downloads'+pthsl+'Torrents'
+
+
+
   
 
 for dc in [downoadir,downoadir2,downoadir3]: 
-  if not os.path.exists(dc): os.mkdir(dc)
-
-
-    
+   path = Path(dc)
+   path.mkdir(parents=True, exist_ok=True)
+  
 logf = open("log.log","a")
 logf.write('\n----------------------  Started at:  '+dt_string +'  ----------------------\n\n' )
  
@@ -49,13 +53,21 @@ logf.write('\n----------------------  Started at:  '+dt_string +'  -------------
 def torrents_(): 
  fl="torrents.txt"
  torf = open(fl,"w")
+ symbols = (u"àáâãäåžæçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅšÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß",u"abvgdeejzijklmnoprstufhzcss_y_euaABVGDEEJZIJKLMNOPRSTUFHZCSS_Y_EUA")
+ tr = {ord(a):ord(b) for a, b in zip(*symbols)}
+ files = [unicodedata.normalize('NFC', f) for f in os.listdir(downoadir3)]
+ for filename in files:
+    if filename.endswith(".torrent"):
+     filename1=filename.translate(tr)
+     os.rename(downoadir3+pthsl+filename,downoadir3+pthsl+filename1)
+
  for file in os.listdir(downoadir3):
-   if file.endswith(".torrent"):
-     torf.write(downoadir3+"/"+ file+"\n")
-
+    print (file) 
+    if file.endswith(".torrent"):
+     torf.write(downoadir3+pthsl+file+"\n")
  torf.close()
-
- cmd = [aria2c,"-i",  cudir+"/"+fl , "-d", downoadir3]
+ 
+ cmd = [aria2c,"-i",  cudir+pthsl+fl , "-d", downoadir3]
  tr=0 
  popen = subprocess.Popen(cmd, shell=False)
  popen.wait()
@@ -97,6 +109,65 @@ def files_():
 #except:
   #print("Files failed") 
  open(fl, 'w').close()
+
+
+
+
+
+def encode():
+ print("\n\nEncoding... \n\n")  
+ os.chdir(downoadir)
+
+ symbols = (u"àáâãäåžæçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅšÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß",
+           u"abvgdeejzijklmnoprstufhzcss_y_euaABVGDEEJZIJKLMNOPRSTUFHZCSS_Y_EUA")
+ tr = {ord(a):ord(b) for a, b in zip(*symbols)}
+ files_path = u'.'
+ files = [unicodedata.normalize('NFC', f) for f in os.listdir(u'.')]
+ for filename in files:
+    if filename.endswith(".mp4"):
+     filename1=filename.translate(tr)
+     fileenc=filename1.encode('utf-8')
+     asciidata=fileenc.decode("utf-8").encode("ascii","ignore")
+  
+     os.rename (filename,asciidata)
+     filenameb=os.path.splitext(asciidata)[0].decode()
+     
+     cmd = [ffmpegbin,"-y", "-i",filenameb+".mp4","-c","copy",filenameb+".mkv"]
+     
+     if os.path.exists((os.path.splitext(filename)[0]+".webm")):
+      if not os.path.exists(filenameb+".webm"):os.rename(os.path.splitext(filename)[0]+".webm",filenameb+".webm")
+      cmd.insert(4,"-i")
+      cmd.insert(5,filenameb+".webm")
+     
+     if os.path.exists((os.path.splitext(filename)[0]+".en.vtt")):
+       if not os.path.exists(filenameb+".en.vtt"):os.rename(os.path.splitext(filename)[0]+".en.vtt",filenameb+".en.vtt")
+       popen = subprocess.Popen([ffmpegbin,"-i",filenameb+".en.vtt",filenameb+".srt"], stdout=subprocess.PIPE)
+       popen.wait()
+       cmd.insert(6,"-i")
+       cmd.insert(7,filenameb+".srt")
+       
+       
+     print(cmd)
+     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+     popen.wait()
+     #streamdata = popen.communicate()[0]
+     rc = popen.returncode
+     output = popen.stdout.read()
+     
+     if rc==0:
+ 
+       logf.write('\nEncoding success: \"'+filenameb+'\"\n' )
+       for ext in [".webm",".mp4",".en.vtt",".srt"]:
+          if os.path.exists(filenameb+ext): os.remove(filenameb+ext)
+    
+     else:
+       logf.write('\nEncoding fail: \"'+filenameb+'\"\n' )
+ os.chdir(cudir)
+
+
+
+
+
 
 def videos_():   
 
@@ -147,7 +218,10 @@ def videos_():
          popen.wait()
          rc = popen.returncode
          tr+=1
-         if rc==0:break  
+         if rc==0:
+           encode() 
+           break
+            
        
         if rc!=0:
         #print
@@ -155,6 +229,8 @@ def videos_():
        cnt += 1
        os.chdir(cudir)
        line = fp.readline()
+   
+
 #except:
   #print("LQ failed") 
 
@@ -201,7 +277,10 @@ def videos_():
          popen.wait()
          rc = popen.returncode
          tr+=1
-         if rc==0:break
+         if rc==0:
+          encode() 
+          break
+          
        
         if rc!=0:
        #print
@@ -209,61 +288,13 @@ def videos_():
        cnt += 1
        os.chdir(cudir)
        line = fp.readline()
-
+   
 #except:
 #  print("HQ failed") 
 
 #try:
 #Merge sound and video
 
- print("\n\nEncoding... \n\n")  
- os.chdir(downoadir)
-
- symbols = (u"àáâãäåžæçèéêëìíîïðñòóôõö÷øùúûüýþÿÀÁÂÃÄÅšÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß",
-           u"abvgdeejzijklmnoprstufhzcss_y_euaABVGDEEJZIJKLMNOPRSTUFHZCSS_Y_EUA")
- tr = {ord(a):ord(b) for a, b in zip(*symbols)}
- files_path = u'.'
- files = [unicodedata.normalize('NFC', f) for f in os.listdir(u'.')]
- for filename in files:
-    if filename.endswith(".mp4"):
-     filename1=filename.translate(tr)
-     fileenc=filename1.encode('utf-8')
-     asciidata=fileenc.decode("utf-8").encode("ascii","ignore")
-  
-     os.rename (filename,asciidata)
-     filenameb=os.path.splitext(asciidata)[0].decode()
-     
-     cmd = [ffmpegbin,"-y", "-i",filenameb+".mp4","-c","copy",filenameb+".mkv"]
-     
-     if os.path.exists((os.path.splitext(filename)[0]+".webm")):
-      if not os.path.exists(filenameb+".webm"):os.rename(os.path.splitext(filename)[0]+".webm",filenameb+".webm")
-      cmd.insert(4,"-i")
-      cmd.insert(5,filenameb+".webm")
-     
-     if os.path.exists((os.path.splitext(filename)[0]+".en.vtt")):
-       if not os.path.exists(filenameb+".en.vtt"):os.rename(os.path.splitext(filename)[0]+".en.vtt",filenameb+".en.vtt")
-       popen = subprocess.Popen([ffmpegbin,"-i",filenameb+".en.vtt",filenameb+".srt"], stdout=subprocess.PIPE)
-       popen.wait()
-       cmd.insert(6,"-i")
-       cmd.insert(7,filenameb+".srt")
-       
-       
-     print(cmd)
-     popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-     popen.wait()
-     #streamdata = popen.communicate()[0]
-     rc = popen.returncode
-     output = popen.stdout.read()
-     
-     if rc==0:
- 
-       logf.write('\nEncoding success: \"'+filenameb+'\"\n' )
-       for ext in [".webm",".mp4",".en.vtt",".srt"]:
-          if os.path.exists(filenameb+ext): os.remove(filenameb+ext)
-    
-     else:
-       logf.write('\nEncoding fail: \"'+filenameb+'\"\n' )
- os.chdir(cudir)
  open(hq, 'w').close()
  open(lq, 'w').close()
 
@@ -275,7 +306,7 @@ def videos_():
 if (len(sys.argv)==1):
      help_()
      sys.exit(1)
-elif (str(sys.argv[1])  == "video"):
+elif (str(sys.argv[1])  == "videos"):
      videos_()
 elif (str(sys.argv[1])  == "files"):
      files_()
