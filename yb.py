@@ -113,6 +113,7 @@ def files_():
 
 
 
+#Merge sound and video
 
 def encode():
  print("\n\nEncoding... \n\n")  
@@ -168,9 +169,6 @@ def encode():
 
 
 
-
-#try:
-#Merge sound and video
 
 def videos_():   
 
