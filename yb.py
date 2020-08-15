@@ -1,5 +1,5 @@
 # -*- coding: cp1251 -*-
-import os,sys,unicodedata,subprocess, contextlib , datetime, platform
+import os,sys,unicodedata,subprocess, contextlib , datetime, platform, re
 from pathlib import Path
 
 if (sys.version_info.major != 3 and sys.version_info.minor != 8):
@@ -46,7 +46,7 @@ for dc in [downoadir,downoadir2,downoadir3]:
    path.mkdir(parents=True, exist_ok=True)
   
 logf = open("log.log","a")
-logf.write('\n----------------------  Started at:  '+dt_string +'  ----------------------\n\n' )
+logf.write('\nStarted at:  '+dt_string)
  
 
 
@@ -102,7 +102,7 @@ def files_():
 
        if rc!=0:
        #print
-        logf.write('\nDownloading failed for: \"'+line+'\"\n' )
+        logf.write('\nDownloading failed for: \"'+line+'\"' )
        cnt += 1
        os.chdir(cudir)
        line = fp.readline()
@@ -161,7 +161,7 @@ def encode():
           if os.path.exists(filenameb+ext): os.remove(filenameb+ext)
     
      else:
-       logf.write('\nEncoding fail: \"'+filenameb+'\"\n' )
+       logf.write('\nEncoding fail: \"'+filenameb+'\"' )
  os.chdir(cudir)
 
 
@@ -174,47 +174,93 @@ def encode():
 
 def videos_():   
 
+
+
  print("\n\nDownloading videos... \n\n")       
-#Low quality
- lq = "lq.txt"
+ 
+ video = "video.txt"
+ 
 #try:
 
- with open(lq) as fp:
+ with open(video) as fp:
    line = fp.readline()
-   cnt = 1
+   
+   
+   
+   
    while line:
        if (line == "\n"):break
+       
+       #Parsing command line 
+       commlen=len(line.split())
+       url=""
+       form=1
+       if (commlen==1):
+           if (len(re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line.split()[0]))!=1):
+              print("Wrong URL format: " + line.split()[0] +  "\n")
+              continue 
+           print("No second parameter specified. Low quality selected.\n")
+           url=line.split()[0]
+       elif (commlen==2):
+           if (len(re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', line.split()[0]))!=1) or (len(re.findall(r"lq\b|hq\b|LQ\b|HQ\b", line.split()[1]))!=1):
+              print("Wrong URL or quality format : " + line +  "\n")
+              continue 
+           url=line.split()[0]
+           if (len(re.findall(r"hq\b|HQ\b", line.split()[1]))==1): form=2
+           
+       else:
+         print("Wrong URL or quality format : " + line +  "\n")
+         continue 
+
+       
        os.chdir(downoadir)
-       print("\n------------------\n\nDownloading LQ {}: {}".format(cnt, line.strip())+"\n\n")
-       checkformat = subprocess.check_output([ytdlbin,"-F",line]).splitlines()
+       print("\n------------------\n\nDownloading: "+line+"\n\n")
+       checkformat = subprocess.check_output([ytdlbin,"-F",url]).splitlines()
        i = -1
        
-       while (checkformat):
+       
+       if (form==1):
+        while (checkformat):
+        #Low quality
+           
            
            if ("mp4" in checkformat[i].decode() and "18 " in checkformat[i].decode()  and "360p" in checkformat[i].decode()) or ("mp4" in checkformat[i].decode() and "video only" in checkformat[i].decode()  and "480p" in checkformat[i].decode())  :
              #print (checkformat[i]+"\n")
            
            
-             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f" , checkformat[i][0:3].decode() , line]
+             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f" , checkformat[i][0:3].decode() , url]
              print ("\n\nSelected video format is: \n\n"+checkformat[i].decode()+"\n\n")
              break
             
            i -= 1
-        
+           
+       else: 
+       #High quality   
+        while (checkformat):
+           
+           if ('mp4' in checkformat[i].decode() and 'video only' in checkformat[i].decode()):
+             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f", checkformat[i][0:3].decode(), url]
+             print ("\n\nSelected video format is: \n\n"+checkformat[i].decode()+"\n\n")
+             break
+           i -= 1
+           
+           
        tr=0 
+       logf.write('\nTrying cmd:  '+ url )
        while tr<trycount: 
         popen = subprocess.Popen(cmd, shell=False)
         popen.wait()
         rc = popen.returncode
         tr+=1
-        if rc==0:break   
-
-       
+        if rc==0:
+         logf.write(' Success!\n' )
+         break   
        if rc!=0:
-        logf.write('\nDownloading fail: \"'+line+'\"\n' )
+        logf.write(' Fail!\n' )
+        
        else:  
         print ("\n\nDownloading soundtrack...\n\n")
-        cmd = [ytdlbin,"--restrict-filenames", "--geo-bypass", "-R", "30", "--write-auto-sub", "-f", "251", line]
+        cmd = [ytdlbin,"--restrict-filenames", "--geo-bypass", "-R", "30", "-f", "251", url]
         tr=0 
         while tr<trycount: 
          popen = subprocess.Popen(cmd, shell=False)
@@ -228,81 +274,21 @@ def videos_():
        
         if rc!=0:
         #print
-         logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
-       cnt += 1
+         logf.write('\nDownloading soundtrack failed for: \"'+url+'\"' )
+       
        os.chdir(cudir)
        line = fp.readline()
    
 
 #except:
-  #print("LQ failed") 
+  #print("failed") 
 
 
 
 
-#High Quality
- hq = "hq.txt"
-#try:
- with open(hq) as fp:
-   line = fp.readline()
-   cnt = 1
-   while line:
-       if (line=="\n"):break
-       os.chdir(downoadir)
-       print("\n------------------\nDownloading HQ {}: {}".format(cnt, line.strip())+"\n\n")
-       
-       checkformat = subprocess.check_output ( [ytdlbin,"-F",str(line)]).splitlines()
-       
-       i = -1
-       while (checkformat):
-           
-           if ('mp4' in checkformat[i].decode() and 'video only' in checkformat[i].decode()):
-             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f", checkformat[i][0:3].decode(), line]
-             print ("\n\nSelected video format is: \n\n"+checkformat[i].decode()+"\n\n")
-             break
-           i -= 1
-       tr=0 
-       while tr<trycount: 
-        popen = subprocess.Popen(cmd, shell=False)
-        popen.wait()
-        rc = popen.returncode
-        tr+=1
-        if rc==0:break
-       
-       if rc!=0:
-        logf.write('\nDownloading fail: \"'+line+'\"\n' )
-       else:
-        print ("\n\nDownloading soundtrack...\n\n") 
-        cmd = [ytdlbin,"--restrict-filenames","--geo-bypass","-R","30","--write-auto-sub","-f","251", line]
-        tr=0 
-        while tr<trycount: 
-         popen = subprocess.Popen(cmd, shell=False)
-         popen.wait()
-         rc = popen.returncode
-         tr+=1
-         if rc==0:
-          encode() 
-          break
-          
-       
-        if rc!=0:
-       #print
-         logf.write('\nDownloading soundtrack failed for: \"'+line+'\"\n' )
-       cnt += 1
-       os.chdir(cudir)
-       line = fp.readline()
-   
-#except:
-#  print("HQ failed") 
-
- open(hq, 'w').close()
- open(lq, 'w').close()
-
-
-#except:
- # print("Encoding failed") 
+ open(video, 'w').close()
  
- 
+
 if (len(sys.argv)==1):
      help_()
      sys.exit(1)
@@ -323,7 +309,7 @@ else:
  
 now = datetime.datetime.now()
 dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-logf.write('\n----------------------  Finished at:  '+dt_string +'  ----------------------\n\n' )
+logf.write('\nFinished at:  '+dt_string)
 logf.close()
 
 
