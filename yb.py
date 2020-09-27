@@ -220,14 +220,19 @@ def videos_():
        if (form==1):
         while (checkformat):
         #Low quality
-           
-           
-           if ("mp4" in checkformat[i].decode() and "18 " in checkformat[i].decode()  and "360p" in checkformat[i].decode()) or ("mp4" in checkformat[i].decode() and "video only" in checkformat[i].decode()  and "480p" in checkformat[i].decode())  :
+           #240p 144p 480p 360p
+           optionalf=checkformat[i].decode() 
+           if (
+           #   "mp4" in optionalf and "480p" in optionalf and "video only" in optionalf 
+              "mp4" in optionalf  and "360p" in optionalf and "video only" in optionalf 
+              or "mp4" in optionalf  and "240p" in optionalf and "video only" in optionalf 
+              or "mp4" in optionalf  and "144p" in optionalf and "video only" in optionalf 
+           ) :
              #print (checkformat[i]+"\n")
            
            
              cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f" , checkformat[i][0:3].decode() , url]
-             print ("\n\nSelected video format is: \n\n"+checkformat[i].decode()+"\n\n")
+             print ("\n\nSelected video format is: \n\n"+optionalf+"\n\n")
              break
             
            i -= 1
@@ -235,10 +240,10 @@ def videos_():
        else: 
        #High quality   
         while (checkformat):
-           
-           if ('mp4' in checkformat[i].decode() and 'video only' in checkformat[i].decode()):
+           optionalf=checkformat[i].decode() 
+           if ('mp4' in optionalf and 'video only' in optionalf):
              cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--write-auto-sub", "-f", checkformat[i][0:3].decode(), url]
-             print ("\n\nSelected video format is: \n\n"+checkformat[i].decode()+"\n\n")
+             print ("\n\nSelected video format is: \n\n"+optionalf+"\n\n")
              break
            i -= 1
            
@@ -258,7 +263,39 @@ def videos_():
         
        else:  
         print ("\n\nDownloading soundtrack...\n\n")
-        cmd = [ytdlbin,"--restrict-filenames", "--geo-bypass", "-R", "30", "-f", "251", url]
+        
+        
+        
+        if (form==1):
+         while (checkformat):
+         #Low audio quality
+           
+           optionalf=checkformat[i].decode() 
+           if (
+           
+              "audio only" in optionalf
+           ) :
+             #print (checkformat[i]+"\n")
+           
+           
+             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--geo-bypass", "-f" , checkformat[i][0:3].decode() , url]
+             print ("\n\nSelected audio format is: \n\n"+optionalf+"\n\n")
+             break
+            
+           i += 1
+           
+        else: 
+        #High audio quality   
+         while (checkformat):
+           optionalf=checkformat[i].decode() 
+           if ("audio only" in optionalf):
+             cmd = [ytdlbin,"--restrict-filenames", "-R", "30", "--geo-bypass", "-f", checkformat[i][0:3].decode(), url]
+             print ("\n\nSelected audio format is: \n\n"+optionalf+"\n\n")
+             break
+           i -= 1
+        
+        
+        
         tr=0 
         while tr<trycount: 
          popen = subprocess.Popen(cmd, shell=False)
