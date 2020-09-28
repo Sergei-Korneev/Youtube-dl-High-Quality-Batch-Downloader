@@ -135,11 +135,12 @@ def encode():
      
      cmd = [ffmpegbin,"-y", "-i",filenameb+".mp4","-c","copy",filenameb+".mkv"]
      
-     if os.path.exists((os.path.splitext(filename)[0]+".webm")):
-      if not os.path.exists(filenameb+".webm"):os.rename(os.path.splitext(filename)[0]+".webm",filenameb+".webm")
-      cmd.insert(4,"-i")
-      cmd.insert(5,filenameb+".webm")
-     
+     for ext in [".webm",".m4a"]:
+          if os.path.exists((os.path.splitext(filename)[0]+ext)):
+           if not os.path.exists(filenameb+ext):os.rename(os.path.splitext(filename)[0]+ext,filenameb+ext)
+           cmd.insert(4,"-i")
+           cmd.insert(5,filenameb+ext)
+      
      if os.path.exists((os.path.splitext(filename)[0]+".en.vtt")):
        if not os.path.exists(filenameb+".en.vtt"):os.rename(os.path.splitext(filename)[0]+".en.vtt",filenameb+".en.vtt")
        popen = subprocess.Popen([ffmpegbin,"-i",filenameb+".en.vtt",filenameb+".srt"], stdout=subprocess.PIPE)
@@ -158,7 +159,7 @@ def encode():
      if rc==0:
  
        logf.write('\nEncoding success: \"'+filenameb+'\"\n' )
-       for ext in [".webm",".mp4",".en.vtt",".srt"]:
+       for ext in [".webm",".mp4",".en.vtt",".srt",".m4a"]:
           if os.path.exists(filenameb+ext): os.remove(filenameb+ext)
     
      else:
