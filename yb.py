@@ -222,12 +222,15 @@ def videos_():
         while (checkformat):
         #Low quality
            #240p 144p 480p 360p
+           #print (checkformat[i].decode() +"\n")
            optionalf=checkformat[i].decode() 
+           #print(optionalf)
            if (
            #   "mp4" in optionalf and "480p" in optionalf and "video only" in optionalf 
-              "mp4" in optionalf  and "360p" in optionalf and "video only" in optionalf 
+              "mp4" in optionalf  and "360p" in optionalf 
               or "mp4" in optionalf  and "240p" in optionalf and "video only" in optionalf 
               or "mp4" in optionalf  and "144p" in optionalf and "video only" in optionalf 
+              
            ) :
              #print (checkformat[i]+"\n")
            
@@ -334,9 +337,7 @@ elif (str(sys.argv[1])  == "files"):
      files_()
 elif (str(sys.argv[1])  == "torrents"):
      torrents_()
-elif (str(sys.argv[1])  == "all"):
-     files_()
-     videos_()
+
      
 else:
      help_()
