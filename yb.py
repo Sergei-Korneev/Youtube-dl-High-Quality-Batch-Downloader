@@ -214,9 +214,25 @@ def videos_():
        
        os.chdir(downoadir)
        print("\n------------------\n\nDownloading: "+line+"\n\n")
-       checkformat = subprocess.check_output([ytdlbin,"-F",url]).splitlines()
-       i = -1
        
+         
+       tr=0 
+       logf.write('\nTrying get formats:  '+ url )
+       while 1:
+         try: 
+          checkformat = subprocess.check_output([ytdlbin,"-F",url]).splitlines()
+          
+          break
+         except:
+          print("\n\n\nFailed to get format for " + url)
+          tr+=1
+          if  (tr==trycount):
+            logf.write('\nFailed to get formats for:  '+ url )
+            return 1
+         
+       #print("\n\n\n Format : "+checkformat)
+       i = -1
+  
        
        if (form==1):
         while (checkformat):
@@ -254,7 +270,7 @@ def videos_():
            
        tr=0 
        logf.write('\nTrying cmd:  '+ url )
-       while tr<trycount: 
+       while 1: 
         popen = subprocess.Popen(cmd, shell=False)
         popen.wait()
         rc = popen.returncode
@@ -263,8 +279,9 @@ def videos_():
          logf.write(' Success!\n' )
          break   
        if rc!=0:
-        logf.write(' Fail!\n' )
-        
+        if  (tr==trycount):
+            logf.write('\nFailed to download:  '+ url )
+            return 1
        else:  
         print ("\n\nDownloading soundtrack...\n\n")
         
