@@ -9,7 +9,7 @@ if (sys.version_info.major != 3 and sys.version_info.minor != 8):
 
  
 def help_():
-  print("use: \nyb.py files \nyb.py videos \nyb.py all\nyb.py torrents")
+  print("use: \nyb.py files \nyb.py videos \nyb.py all\nyb.py torrents\nyb.py clearv\nyb.py clearf")
   
 
 
@@ -37,7 +37,8 @@ downoadir=cudir+pthsl+'Downloads'+pthsl+'Videos'
 downoadir2=cudir+pthsl+'Downloads'+pthsl+'Files'
 downoadir3=cudir+pthsl+'Downloads'+pthsl+'Torrents'
 
-
+video = "video.txt"
+fl = "files.txt"
 
   
 
@@ -48,6 +49,18 @@ for dc in [downoadir,downoadir2,downoadir3]:
 logf = open("log.log","a")
 logf.write('\nStarted at:  '+dt_string)
  
+
+
+
+def clearf_():
+  open(fl, 'w').close()
+
+
+
+def clearv_():
+  open(video, 'w').close()
+
+
 
 
 def torrents_(): 
@@ -75,13 +88,12 @@ def torrents_():
  print (rc)
  
  
- 
 
 def files_(): 
 
  print("\n\nDownloading files... \n\n")       
 #Files
- fl = "files.txt"
+
 #try:
 
  with open(fl) as fp:
@@ -108,8 +120,8 @@ def files_():
        line = fp.readline()
 #except:
   #print("Files failed") 
- open(fl, 'w').close()
 
+ clearf_()
 
 
 
@@ -176,8 +188,6 @@ def videos_():
 
 
  print("\n\nDownloading videos... \n\n")       
- 
- video = "video.txt"
  
 #try:
 
@@ -336,13 +346,10 @@ def videos_():
        line = fp.readline()
    
 
-#except:
-  #print("failed") 
+ clearv_()
 
 
 
-
- open(video, 'w').close()
  
 
 if (len(sys.argv)==1):
@@ -354,6 +361,10 @@ elif (str(sys.argv[1])  == "files"):
      files_()
 elif (str(sys.argv[1])  == "torrents"):
      torrents_()
+elif (str(sys.argv[1])  == "clearv"):
+     clearv_()
+elif (str(sys.argv[1])  == "clearf"):
+     clearf_()
 
      
 else:
